@@ -1,12 +1,14 @@
 import pool from '../config/db.js';
+import { updateCustomerStats } from './customer.model.js';
 
 // Helper to get progress from status
 const getProgressFromStatus = (status) => {
   switch ((status || '').toLowerCase()) {
+    case 'to do': return 0;
     case 'ready': return 0;
     case 'in progress': return 40;
     case 'in review': return 75;
-    case 'finished': return 100;
+    case 'completed': return 100;
     default: return 0;
   }
 };
@@ -44,20 +46,33 @@ export const createJob = async (data) => {
 
 // Get all jobs
 export const getAllJobs = async () => {
-  const result = await pool.query('SELECT * FROM jobs ORDER BY id DESC');
+  const result = await pool.query('SELECT * FROM jobs WHERE is_deleted = FALSE ORDER BY id DESC');
   return result.rows;
 };
 
 // Get job by ID
 export const getJobById = async (id) => {
-  const result = await pool.query('SELECT * FROM jobs WHERE id = $1', [id]);
+  const result = await pool.query('SELECT * FROM jobs WHERE id = $1 AND is_deleted = FALSE', [id]);
   return result.rows[0];
 };
 
 export const getJobsByCustomerId = async (customerId) => {
-    const result = await pool.query('SELECT * FROM jobs WHERE customer_id = $1 ORDER BY created_at DESC', [customerId]);
+    const result = await pool.query('SELECT * FROM jobs WHERE customer_id = $1 AND is_deleted = FALSE ORDER BY created_at DESC', [customerId]);
     return result.rows;
 }
+
+export const getUnpaidJobsByCustomerId = async (customerId) => {
+  const result = await pool.query(
+    `SELECT * FROM jobs 
+     WHERE customer_id = $1 
+       AND is_deleted = FALSE 
+       AND is_paid = FALSE 
+     ORDER BY created_at DESC`,
+    [customerId]
+  );
+  return result.rows;
+};
+
 
 // Update a job
 export const updateJob = async (id, updates) => {
@@ -90,12 +105,6 @@ export const updateJobStatus = async (id, status) => {
   return result.rows[0];
 };
 
-// Delete a job
-export const deleteJob = async (id) => {
-  const result = await pool.query('DELETE FROM jobs WHERE id = $1 RETURNING *', [id]);
-  return result.rows[0];
-};
-
 
 export const updateNotesByJobId = async (id, notes) => {
   const result = await pool.query(
@@ -104,3 +113,10 @@ export const updateNotesByJobId = async (id, notes) => {
   );
   return result.rows[0];
 }
+
+
+// Delete a job
+export const deleteJob = async (id, userId) => {
+  const result = await pool.query('UPDATE jobs SET is_deleted = TRUE, deleted_by = $1 WHERE id = $2 RETURNING *', [userId, id]);
+  return result.rows[0];
+};

@@ -9,6 +9,9 @@ export const createInvoice = async ({
   invoice_id,
   description,
   customer_name,
+  customer_id,
+  job_code,
+  category,
   due_date,
   status = "Draft",
   payment_terms,
@@ -22,13 +25,13 @@ export const createInvoice = async ({
 }) => {
   const result = await pool.query(
     `INSERT INTO invoices (
-      invoice_id, description, customer_name, due_date, 
+      invoice_id, description, customer_name, customer_id, job_code, category, due_date, 
       status, payment_terms, tax_rate, discount_rate, subtotal,
       tax_amount, discount_amount, total, notes, is_deleted
-    ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)
+    ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17)
     RETURNING *`,
     [
-      invoice_id, description, customer_name, due_date,
+      invoice_id, description, customer_name, customer_id, job_code, category, due_date,
       status, payment_terms, tax_rate, discount_rate, subtotal,
       tax_amount, discount_amount, total, notes, false
     ]
@@ -135,6 +138,30 @@ export const getInvoiceById = async (id) => {
   }
 
   return result.rows[0]
+}
+
+export const getInvoicesByCustomerId = async (customerId) => {
+  const result = await pool.query(`
+    SELECT 
+      i.*, 
+      COALESCE(json_agg(
+        json_build_object(
+          'id', li.id,
+          'invoice_id', li.invoice_id,
+          'description', li.description,
+          'quantity', li.quantity,
+          'unit', li.unit,
+          'rate', li.rate,
+          'amount', li.amount
+        )
+      ) FILTER (WHERE li.id IS NOT NULL), '[]') AS line_items
+    FROM invoices i
+    LEFT JOIN invoice_line_items li ON i.id = li.invoice_id
+    WHERE i.customer_id = $1 AND i.is_deleted = false
+    GROUP BY i.id
+    ORDER BY i.id DESC
+  `, [customerId])
+  return result.rows
 }
 
 /**

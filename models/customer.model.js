@@ -41,6 +41,7 @@ export const createCustomer = async ({
     ]
   );
   return result.rows[0];
+
 };
 
 /**
@@ -114,6 +115,33 @@ export const getCustomerById = async (id) => {
     throw new Error("Customer not found")
   }
   return result.rows[0];
+};
+
+
+
+// updateCustomerStats.js
+export const updateCustomerStats = async (customerId) => {
+  const result = await pool.query(
+    `
+    UPDATE customer c SET 
+      revenue = COALESCE(j.total_value, 0),
+      jobs = COALESCE(j.job_count, 0)
+    FROM (
+      SELECT 
+        customer_id,
+        SUM(project_value) AS total_value,
+        COUNT(*) AS job_count
+      FROM jobs
+      WHERE is_deleted = false
+      GROUP BY customer_id
+    ) j
+    WHERE c.id = j.customer_id AND c.id = $1
+    RETURNING c.*;
+    `,
+    [customerId]
+  );
+
+  return result.rows[0]; // updated customer
 };
 
 

@@ -7,7 +7,8 @@ import {
   deleteJobController,
   getJobsByCustomerIdController,
   updateJobStatusController,
-  updateJobNotesController
+  updateJobNotesController,
+  getUnpaidJobsByCustomerIdController
 } from '../controllers/job.controller.js';
 
 const router = express.Router();
@@ -24,12 +25,14 @@ router.get('/:id', getJobByIdController);
 // Assuming this is to get jobs by customer ID
 router.get('/customer/:customerId', getJobsByCustomerIdController);
 
+router.get('/unpaid-jobs/:customerId', getUnpaidJobsByCustomerIdController);
+
 // Update job
 router.put('/update/:id', updateJobController);
 
 router.patch('/update-status/jobs/:id', updateJobStatusController);
 // Delete job
-router.delete('/delete/:id', deleteJobController);
+router.patch('/delete/:id', deleteJobController);
 
 router.patch('/update-notes/:id', updateJobNotesController);
 

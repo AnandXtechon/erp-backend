@@ -1,3 +1,4 @@
+import { updateCustomerStats } from '../models/customer.model.js';
 import {
   createJob,
   getAllJobs,
@@ -5,14 +6,15 @@ import {
   updateJob,
   deleteJob,
   getJobsByCustomerId,
-  updateNotesByJobId
+  updateNotesByJobId,
+  getUnpaidJobsByCustomerId
 } from '../models/job.model.js';
 
 // Create a new job
 export const addJobController = async (req, res) => {
   try {
     const job = await createJob(req.body);
-
+    await updateCustomerStats(job.customer_id); // Update customer stats after creating a job
     res.status(201).json({ success: true, job });
   } catch (error) {
     console.error('Error creating job:', error);
@@ -56,10 +58,23 @@ export const getJobsByCustomerIdController = async (req, res) => {
     }
 };
 
+export const getUnpaidJobsByCustomerIdController = async (req, res) => {
+  try {
+    const jobs = await getUnpaidJobsByCustomerId(req.params.customerId);
+    if (!jobs || jobs.length === 0) {
+      return res.status(404).json({ success: false, message: 'No unpaid jobs found for this customer' });
+    }
+    res.status(200).json({ success: true, jobs });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
 // Update job
 export const updateJobController = async (req, res) => {
   try {
     const updated = await updateJob(req.params.id, req.body);
+    await updateCustomerStats(updated.customer_id); // Update customer stats after updating a job
     if (!updated) {
       return res.status(404).json({ success: false, message: 'Job not found' });
     }
@@ -86,19 +101,6 @@ export const updateJobStatusController = async (req, res) => {
   }
 };
 
-// Delete job
-export const deleteJobController = async (req, res) => {
-  try {
-    const deleted = await deleteJob(req.params.id);
-    if (!deleted) {
-      return res.status(404).json({ success: false, message: 'Job not found' });
-    }
-    res.status(200).json({ success: true, job: deleted });
-  } catch (error) {
-    res.status(500).json({ success: false, message: error.message });
-  }
-};
-
 // Update job notes
 export const updateJobNotesController = async (req, res) => { 
   try {
@@ -115,3 +117,17 @@ export const updateJobNotesController = async (req, res) => {
     res.status(500).json({ success: false, message: error.message });
   }
 }
+
+// Delete job
+export const deleteJobController = async (req, res) => {
+  try {
+    const { userId } = req.body; // Assuming userId is passed in the request body
+    const deleted = await deleteJob(req.params.id, userId);
+    if (!deleted) {
+      return res.status(404).json({ success: false, message: 'Job not found' });
+    }
+    res.status(200).json({ success: true, job: deleted });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};

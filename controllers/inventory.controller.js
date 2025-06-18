@@ -1,9 +1,15 @@
+import e from "express"
 import {
   createInventoryItem,
   getAllInventoryItems,
   getInventoryItemById,
   updateInventoryItemById,
   deleteInventoryItemById,
+  getInventoryItemsByCategory,
+  getInventoryItemsBySearch,
+  getInventoryItemsBySKU,
+  getInventoryItemsByWarehouse,
+  getInventoryItemsByVendor,
 } from "../models/inventory.model.js"
 
 /**
@@ -36,6 +42,66 @@ export const getInventoryItem = async (req, res) => {
     } else {
       res.status(500).json({ success: false, message: "Failed to fetch inventory item" })
     }
+  }
+}
+
+export const getInventoryItemByCategory = async (req, res) => {
+  const { category } = req.params
+
+  try {
+    const inventoryItems = await getInventoryItemsByCategory(category)
+    res.status(200).json({ success: true, data: inventoryItems })
+  } catch (error) {
+    console.error("Error fetching inventory items by category:", error.message)
+    res.status(500).json({ success: false, message: "Failed to fetch inventory items by category" })
+  }
+}
+
+export const getInventoryItemByVendor = async (req, res) => {
+  const { vendor } = req.params 
+  try {
+    const inventoryItems = await getInventoryItemsByVendor(vendor)
+    res.status(200).json({ success: true, data: inventoryItems })
+  } catch (error) {
+    console.error("Error fetching inventory items by vendor:", error.message)
+    res.status(500).json({ success: false, message: "Failed to fetch inventory items by vendor" })
+  }
+}
+
+export const getInventoryItemByWarehouse = async (req, res) => {
+  const { warehouse } = req.params
+  try {
+    const inventoryItems = await getInventoryItemsByWarehouse(warehouse)
+    res.status(200).json({ success: true, data: inventoryItems })
+  } catch (error) {
+    console.error("Error fetching inventory items by warehouse:", error.message)
+    res.status(500).json({ success: false, message: "Failed to fetch inventory items by warehouse" })
+  }
+}
+
+export const getInventoryItemBySKU = async (req, res) => {
+  const { sku } = req.params
+
+  try {
+    const inventoryItems = await getInventoryItemsBySKU(sku)
+    res.status(200).json({ success: true, data: inventoryItems })
+  } catch (error) {
+    console.error("Error fetching inventory items by SKU:", error.message)
+    res.status(500).json({ success: false, message: "Failed to fetch inventory items by SKU" })
+  }
+}
+
+export const getInventoryItemBySearch = async (req, res) => {
+  const search  = req.query.q;
+  if (!search || search.trim() === "") {
+    return res.status(400).json({ success: false, message: "Missing search query" });
+  }
+  try {
+    const inventoryItems = await getInventoryItemsBySearch(search)
+    res.status(200).json({ success: true, data: inventoryItems })
+  } catch (error) {
+    console.error("Error fetching inventory items by search:", error.message)
+    res.status(500).json({ success: false, message: "Failed to fetch inventory items by search" })
   }
 }
 

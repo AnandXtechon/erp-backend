@@ -5,6 +5,7 @@ import {
   getInvoiceByIdController,
   updateInvoiceController,
   deleteInvoiceController,
+  getInvoiceByCustomerIdController,
 } from "../controllers/invoice.controller.js"
 
 const router = express.Router()
@@ -32,6 +33,8 @@ router.get("/", getAllInvoicesController)
  * @access  Private
  */
 router.get("/:id", getInvoiceByIdController)
+
+router.get("/customer-invoice/:customerId", getInvoiceByCustomerIdController)
 
 /**
  * @route   PUT /api/invoices/:id

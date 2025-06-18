@@ -74,6 +74,42 @@ export const getInventoryItemById = async (id) => {
   return result.rows[0]
 }
 
+export const getInventoryItemsByCategory = async (category) => {
+  const result = await pool.query(`
+    SELECT * FROM inventory WHERE category = $1 AND is_deleted = false
+  `, [category])
+  return result.rows
+}
+
+export const getInventoryItemsByVendor = async (vendor) => {
+  const result = await pool.query(`
+    SELECT * FROM inventory WHERE vendor = $1 AND is_deleted = false
+  `, [vendor])
+  return result.rows
+}
+
+export const getInventoryItemsByWarehouse = async (warehouse) => {
+  const result = await pool.query(`
+    SELECT * FROM inventory WHERE warehouse = $1 AND is_deleted = false
+  `, [warehouse])
+  return result.rows
+}
+
+export const getInventoryItemsBySKU = async (sku) => {
+  const result = await pool.query(`
+    SELECT * FROM inventory WHERE sku = $1 AND is_deleted = false
+  `, [sku])
+  return result.rows
+}
+
+export const getInventoryItemsBySearch = async (search) => {
+  const result = await pool.query(`
+    SELECT * FROM inventory WHERE (name ILIKE $1 OR sku ILIKE $1 OR category ILIKE $1 OR vendor ILIKE $1 OR warehouse ILIKE $1 OR warehouse ILIKE $1) AND is_deleted = false
+  `, [`%${search}%`])
+  return result.rows
+}
+
+
 /**
  * Update inventory item by ID
  * @param {number} id - The inventory item ID

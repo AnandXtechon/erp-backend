@@ -5,7 +5,8 @@ import {
   updateInvoiceById,
   deleteInvoiceById,
   addInvoiceLineItems,
-  deleteInvoiceLineItems, 
+  deleteInvoiceLineItems,
+  getInvoicesByCustomerId, 
 } from "../models/invoice.model.js"
 
 /**
@@ -19,6 +20,9 @@ export const createInvoiceController = async (req, res) => {
       invoice_id,
       description,
       customer_name,
+      customer_id,
+      job_code,
+      category,
       due_date,
       status,
       payment_terms,
@@ -37,6 +41,9 @@ export const createInvoiceController = async (req, res) => {
       invoice_id,
       description,
       customer_name,
+      customer_id,
+      job_code,
+      category,
       due_date,
       status,
       payment_terms,
@@ -117,6 +124,24 @@ export const getInvoiceByIdController = async (req, res) => {
     res.status(500).json({
       success: false,
       error: "Failed to fetch invoice",
+      details: error.message,
+    })
+  }
+}
+
+export const getInvoiceByCustomerIdController = async (req, res) => {
+  try {
+    const { customerId } = req.params
+    const invoices = await getInvoicesByCustomerId(customerId)
+    res.status(200).json({
+      success: true,
+      data: invoices,
+    })
+  } catch (error) {
+    console.error("Error fetching invoices by customer ID:", error)
+    res.status(500).json({
+      success: false,
+      error: "Failed to fetch invoices",
       details: error.message,
     })
   }

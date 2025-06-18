@@ -18,6 +18,8 @@ CREATE TABLE IF NOT EXISTS jobs (
     estimated_hours DECIMAL(5,2) DEFAULT 0.0,
     remaining_hours DECIMAL(5,2) GENERATED ALWAYS AS (estimated_hours - hours_logged) STORED,
     notes TEXT,
+    is_deleted BOOLEAN DEFAULT FALSE,
+    deleted_by VARCHAR(255),
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
