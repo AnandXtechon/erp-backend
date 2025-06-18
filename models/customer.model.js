@@ -4,7 +4,7 @@ import pool from '../config/db.js';
  * Fetch all customers from the database
  */
 export const getAllCustomers = async () => {
-  const result = await pool.query('SELECT * FROM customer WHERE is_deleted=false ORDER BY id DESC');
+  const result = await pool.query('SELECT * FROM customers WHERE is_deleted=false ORDER BY id DESC');
   return result.rows;
 };
 
@@ -23,7 +23,7 @@ export const createCustomer = async ({
   status = 'Active',
 }) => {
   const result = await pool.query(
-    `INSERT INTO customer 
+    `INSERT INTO customers 
       (name, address, pincode, country, state, email, phone, type, status) 
      VALUES 
       ($1, $2, $3, $4, $5, $6, $7, $8, $9) 
@@ -63,7 +63,7 @@ export const updateCustomerById = async (id, updates) => {
   } = updates;
 
   const result = await pool.query(
-    `UPDATE customer SET 
+    `UPDATE customers SET 
       name = $1,
       address = $2,
       pincode = $3,
@@ -99,7 +99,7 @@ export const updateCustomerById = async (id, updates) => {
 
 export const deleteCustomerById = async (id, deletedBy) => {
   const result = await pool.query(
-    `UPDATE customer 
+    `UPDATE customers
      SET is_deleted = true, deleted_by = $2 
      WHERE id = $1 
      RETURNING id`,
@@ -110,7 +110,7 @@ export const deleteCustomerById = async (id, deletedBy) => {
 
 
 export const getCustomerById = async (id) => {
-  const result = await pool.query(`SELECT * FROM customer WHERE id = $1`, [id]);
+  const result = await pool.query(`SELECT * FROM customers WHERE id = $1`, [id]);
   if (result.rows.length === 0) {
     throw new Error("Customer not found")
   }
@@ -123,7 +123,7 @@ export const getCustomerById = async (id) => {
 export const updateCustomerStats = async (customerId) => {
   const result = await pool.query(
     `
-    UPDATE customer c SET 
+    UPDATE customers c SET 
       revenue = COALESCE(j.total_value, 0),
       jobs = COALESCE(j.job_count, 0)
     FROM (

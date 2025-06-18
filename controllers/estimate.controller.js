@@ -49,7 +49,7 @@ export const getEstimateByIdController = async (req, res) => {
  */
 export const addEstimateController = async (req, res) => {
     // Ensure consistent field naming with database schema
-    const { estimate_id, title, description, customer, valid_until, status = "Draft", items = [] } = req.body
+    const { estimate_id, title, item, customer, valid_until, status = "Draft", items = [] } = req.body
 
     // Validate required fields
     if (!estimate_id || !title || !customer || !valid_until) {
@@ -76,7 +76,7 @@ export const addEstimateController = async (req, res) => {
         const estimate = await createEstimate({
             estimate_id,
             title,
-            description,
+            item,
             customer,
             valid_until,
             status,
@@ -111,7 +111,7 @@ export const addEstimateController = async (req, res) => {
 export const updateEstimateByIdController = async (req, res) => {
     const { id } = req.params
     // Ensure consistent field naming with database schema
-    const { estimate_id, title, description, customer, valid_until, status = "Draft", items = [] } = req.body
+    const { estimate_id, title, item, customer, valid_until, status = "Draft", items = [] } = req.body
 
     // Validate required fields
     if (!estimate_id || !title || !customer || !valid_until) {
@@ -138,7 +138,7 @@ export const updateEstimateByIdController = async (req, res) => {
         const updatedEstimate = await updateEstimateById(id, {
             estimate_id,
             title,
-            description,
+            item,
             customer,
             valid_until,
             status,

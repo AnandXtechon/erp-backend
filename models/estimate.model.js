@@ -8,17 +8,17 @@ import pool from "../config/db.js"
 export const createEstimate = async ({
   estimate_id,
   title,
-  description,
+  item,
   customer,
   valid_until,
   status = "Draft",
   total = 0,
 }) => {
   const result = await pool.query(
-    `INSERT INTO estimates (estimate_id, title, description, customer, valid_until, status, total, is_deleted, deleted_by)
+    `INSERT INTO estimates (estimate_id, title, item, customer, valid_until, status, total, is_deleted, deleted_by)
      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
      RETURNING *`,
-    [estimate_id, title, description, customer, valid_until, status, total, is_deleted, deleted_by],
+    [estimate_id, title, item, customer, valid_until, status, total, is_deleted, deleted_by],
   )
   return result.rows[0]
 }
@@ -35,9 +35,9 @@ export const addEstimateLineItems = async (estimate_id, items) => {
     return []
   }
 
-  const values = items.map(({ description, quantity, unit, rate }) => [
+  const values = items.map(({ item, quantity, unit, rate }) => [
     estimate_id,
-    description,
+    item,
     Number(quantity || 0),
     unit,
     Number(rate || 0),
@@ -51,7 +51,7 @@ export const addEstimateLineItems = async (estimate_id, items) => {
 
   const result = await pool.query(
     `INSERT INTO estimate_line_items 
-     (estimate_id, description, quantity, unit, rate) 
+     (estimate_id, item, quantity, unit, rate) 
      VALUES ${placeholders}
      RETURNING *`,
     flatValues,
@@ -73,7 +73,7 @@ export const getAllEstimates = async () => {
         json_build_object(
           'id', li.id,
           'estimate_id', li.estimate_id,
-          'description', li.description,
+          'item', li.item,
           'quantity', li.quantity,
           'unit', li.unit,
           'rate', li.rate,
@@ -104,7 +104,7 @@ export const getEstimateById = async (id) => {
         json_build_object(
           'id', li.id,
           'estimate_id', li.estimate_id,
-          'description', li.description,
+          'item', li.item,
           'quantity', li.quantity,
           'unit', li.unit,
           'rate', li.rate,
@@ -133,13 +133,13 @@ export const getEstimateById = async (id) => {
  * @returns {Object} The updated estimate
  */
 export const updateEstimateById = async (id, updates) => {
-  const { estimate_id, title, description, customer, valid_until, status, total } = updates
+  const { estimate_id, title, item, customer, valid_until, status, total } = updates
 
   const result = await pool.query(
     `UPDATE estimates SET 
       estimate_id = $1,
       title = $2,
-      description = $3,
+      item = $3,
       customer = $4,
       valid_until = $5,
       status = $6,
@@ -147,7 +147,7 @@ export const updateEstimateById = async (id, updates) => {
       updated_at = CURRENT_TIMESTAMP
      WHERE id = $8
      RETURNING *`,
-    [estimate_id, title, description, customer, valid_until, status, total, id],
+    [estimate_id, title, item, customer, valid_until, status, total, id],
   )
 
   if (result.rowCount === 0) {
