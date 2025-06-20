@@ -8,17 +8,18 @@ import pool from "../config/db.js"
 export const createEstimate = async ({
   estimate_id,
   title,
-  item,
+  description,
+  customer_id,
   customer,
   valid_until,
   status = "Draft",
   total = 0,
 }) => {
   const result = await pool.query(
-    `INSERT INTO estimates (estimate_id, title, item, customer, valid_until, status, total, is_deleted, deleted_by)
-     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+    `INSERT INTO estimates (estimate_id, title, description, customer_id, customer, valid_until, status, total, is_deleted, deleted_by)
+     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
      RETURNING *`,
-    [estimate_id, title, item, customer, valid_until, status, total, is_deleted, deleted_by],
+    [estimate_id, title, description, customer_id, customer, valid_until, status, total, false, null],
   )
   return result.rows[0]
 }
@@ -35,23 +36,24 @@ export const addEstimateLineItems = async (estimate_id, items) => {
     return []
   }
 
-  const values = items.map(({ item, quantity, unit, rate }) => [
+  const values = items.map(({ item, quantity, unit, rate, amount }) => [
     estimate_id,
     item,
     Number(quantity || 0),
     unit,
     Number(rate || 0),
+    Number(amount || 0),
   ])
 
   const placeholders = values
-    .map((_, i) => `($${i * 5 + 1}, $${i * 5 + 2}, $${i * 5 + 3}, $${i * 5 + 4}, $${i * 5 + 5})`)
+    .map((_, i) => `($${i * 6 + 1}, $${i * 6 + 2}, $${i * 6 + 3}, $${i * 6 + 4}, $${i * 6 + 5}, $${i * 6 + 6})`)
     .join(", ")
 
   const flatValues = values.flat()
 
   const result = await pool.query(
     `INSERT INTO estimate_line_items 
-     (estimate_id, item, quantity, unit, rate) 
+     (estimate_id, item, quantity, unit, rate, amount) 
      VALUES ${placeholders}
      RETURNING *`,
     flatValues,
@@ -59,6 +61,48 @@ export const addEstimateLineItems = async (estimate_id, items) => {
 
   return result.rows
 }
+
+export const updateEstimateLineItems = async (items) => {
+  if (!items || items.length === 0) {
+    return []
+  }
+
+  // Prepare values: [id, item, quantity, unit, rate, amount]
+  const values = items.map(({ id, item, quantity, unit, rate, amount }) => [
+    id,
+    item,
+    Number(quantity || 0),
+    unit,
+    Number(rate || 0),
+    Number(amount || 0),
+  ])
+
+  const flatValues = values.flat()
+
+  const placeholders = values
+    .map((_, i) => `($${i * 6 + 1}, $${i * 6 + 2}, $${i * 6 + 3}, $${i * 6 + 4}, $${i * 6 + 5}, $${i * 6 + 6})`)
+    .join(', ')
+
+  const result = await pool.query(
+    `
+    UPDATE estimate_line_items AS eli SET
+      item = data.item,
+      quantity = data.quantity,
+      unit = data.unit,
+      rate = data.rate,
+      amount = data.amount
+    FROM (
+      VALUES ${placeholders}
+    ) AS data(id, item, quantity, unit, rate, amount)
+    WHERE eli.id = data.id
+    RETURNING eli.*
+    `,
+    flatValues
+  )
+
+  return result.rows
+}
+
 
 /**
  * Get all estimates with line items
@@ -133,22 +177,23 @@ export const getEstimateById = async (id) => {
  * @returns {Object} The updated estimate
  */
 export const updateEstimateById = async (id, updates) => {
-  const { estimate_id, title, item, customer, valid_until, status, total } = updates
-
+  const { estimate_id, title, description, customer_id, customer, valid_until, status, total } = updates
   const result = await pool.query(
     `UPDATE estimates SET 
       estimate_id = $1,
       title = $2,
-      item = $3,
-      customer = $4,
-      valid_until = $5,
-      status = $6,
-      total = $7,
+      description = $3,
+      customer_id = $4,
+      customer = $5,
+      valid_until = $6,
+      status = $7,
+      total = $8,
       updated_at = CURRENT_TIMESTAMP
-     WHERE id = $8
+      WHERE id = $9
      RETURNING *`,
-    [estimate_id, title, item, customer, valid_until, status, total, id],
+    [estimate_id, title, description, customer_id, customer, valid_until, status, total, id],
   )
+  
 
   if (result.rowCount === 0) {
     throw new Error("Estimate not found")

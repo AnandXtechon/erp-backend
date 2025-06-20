@@ -6,6 +6,7 @@ import {
   updateInvoiceController,
   deleteInvoiceController,
   getInvoiceByCustomerIdController,
+  sendInvoiceEmailController,
 } from "../controllers/invoice.controller.js"
 
 const router = express.Router()
@@ -53,4 +54,5 @@ router.put(
  */
 router.put("/delete/:id", deleteInvoiceController)
 
+router.post("/send-invoice", sendInvoiceEmailController)
 export default router 

@@ -4,6 +4,8 @@ import {
   updateCustomerById,
   deleteCustomerById,
   getCustomerById,
+  updateCustomerNotes,
+  getCustomerEmailById,
 } from "../models/customer.model.js";
 
 // GET /api/customers
@@ -19,6 +21,43 @@ export const getCustomers = async (req, res) => {
     res.status(500).json({
       success: false,
       message: "Failed to fetch customers",
+    });
+  }
+};
+
+
+export const getCustomer = async (req, res) => {
+  const { id } = req.params;
+  try {
+    const customer = await getCustomerById(id);
+    res.status(200).json({
+      success: true,
+      customer,
+    });
+  } catch (error) {
+    console.error(`Error fetching customer ${id}:`, error.message);
+    res.status(500).json({
+      success: false,
+      message: "Failed to fetch customer",
+      error: error.message,
+    });
+  }
+};
+
+export const getCustomerEmailController = async  (req, res) => {
+  const { id } = req.params;
+  try {
+    const email = await getCustomerEmailById(id);
+    res.status(200).json({
+      success: true,
+      email,
+    });
+  } catch (error) {
+    console.error(`Error fetching customer email ${id}:`, error.message);
+    res.status(500).json({
+      success: false,
+      message: "Failed to fetch customer email",
+      error: error.message,
     });
   }
 };
@@ -122,20 +161,34 @@ export const deleteCustomer = async (req, res) => {
   }
 };
 
-export const getCustomer = async (req, res) => {
+export const updateCustomerNotesController = async (req, res) => {
   const { id } = req.params;
+  const { notes } = req.body;
+
+  if (!notes) {
+    return res.status(400).json({
+      success: false,
+      message: "Notes are required",
+    });
+  }
+
   try {
-    const customer = await getCustomerById(id);
+    const updatedCustomer = await updateCustomerNotes(id,notes);
+    if (!updatedCustomer) {
+      return res.status(404).json({
+        success: false,
+        message: "Customer not found",
+      });
+    }     
     res.status(200).json({
       success: true,
-      customer,
+      customer: updatedCustomer,
     });
   } catch (error) {
-    console.error(`Error fetching customer ${id}:`, error.message);
+    console.error("Error updating customer notes:", error.message);
     res.status(500).json({
       success: false,
-      message: "Failed to fetch customer",
-      error: error.message,
+      message: "Failed to update customer notes",
     });
   }
 };

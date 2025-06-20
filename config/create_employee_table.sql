@@ -3,7 +3,7 @@ CREATE TABLE IF NOT EXISTS employees (
     name VARCHAR(255) NOT NULL,
     position VARCHAR(100),
     status VARCHAR(50) DEFAULT 'Clocked Out' CHECK (
-        status IN ('Clocked In', 'On Break', 'Clocked Out')
+        status IN ('Clocked In', 'On Break', 'Returned', 'Clocked Out')
     ),
     current_job_id INTEGER REFERENCES jobs(id),
 	current_job_name VARCHAR(200),
@@ -17,11 +17,15 @@ CREATE TABLE IF NOT EXISTS timesheets (
     employee_id INTEGER NOT NULL REFERENCES employees(id) ON DELETE CASCADE,
     employee_name VARCHAR(255) NOT NULL,
     job_id INTEGER REFERENCES jobs(id),
-	job_name VARCHAR(200),
+    job_name VARCHAR(200),
     work_date DATE NOT NULL,
     clock_in TIME NOT NULL,
-    clock_out TIME NOT NULL,
+    clock_out TIME,
+    break_start_time TIME,
     break_duration INTERVAL DEFAULT INTERVAL '0 hours',
+    status VARCHAR(50) DEFAULT 'Clocked In' CHECK (
+        status IN ('Clocked In', 'On Break', 'Returned', 'Clocked Out')
+    ),
     total_hours DECIMAL(4,2) GENERATED ALWAYS AS (
         EXTRACT(EPOCH FROM (clock_out - clock_in - break_duration)) / 3600
     ) STORED,

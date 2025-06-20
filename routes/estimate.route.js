@@ -6,7 +6,8 @@ import {
   deleteEstimateByIdController,
   getEstimateByIdController,
   updateEstimateStatusController,
-  updateEstimateNotesController
+  updateEstimateNotesController,
+  sendEstimateEmailController
 } from "../controllers/estimate.controller.js";
 
 const router = express.Router();
@@ -17,6 +18,7 @@ router.put("/update/:id", updateEstimateByIdController);
 router.patch("/delete/:id", deleteEstimateByIdController) 
 router.get("/:id", getEstimateByIdController)
 router.patch("/status/:id", updateEstimateStatusController)
-router.patch("/update-notes/:id", updateEstimateNotesController)  
+router.patch("/update-notes/:id", updateEstimateNotesController)
+router.post("/send-estimate", sendEstimateEmailController)
 
 export default router;

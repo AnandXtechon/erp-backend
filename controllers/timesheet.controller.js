@@ -75,3 +75,17 @@ export const deleteTimesheetController = async (req, res) => {
     res.status(500).json({ success: false, message: error.message });
   }
 };
+
+
+export const getOpenTimesheetToday = async (req, res) => {
+  const { employee_id } = req.params;
+  try {
+    const timesheet = await getOpenTimesheetToday(employee_id);
+    if (!timesheet) {
+      return res.status(404).json({ success: false, message: 'No open timesheet found for today' });
+    }
+    res.status(200).json({ success: true, timesheet });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+}

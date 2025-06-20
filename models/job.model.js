@@ -120,3 +120,72 @@ export const deleteJob = async (id, userId) => {
   const result = await pool.query('UPDATE jobs SET is_deleted = TRUE, deleted_by = $1 WHERE id = $2 RETURNING *', [userId, id]);
   return result.rows[0];
 };
+
+
+// --- Job Inventory Usage CRUD ---
+
+// Create job inventory usage record
+export const createJobInventoryUsage = async ({
+  job_id,
+  job_code,
+  item_name,
+  item_code,
+  rate,
+  margin,
+  quantity_used,
+}) => {
+  // Calculate amount
+  const amount = Number(quantity_used) * Number(rate);
+  const result = await pool.query(
+    `INSERT INTO job_inventory_usage (
+      job_id, job_code, item_name, item_code, rate, margin, quantity_used, amount
+    ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8)
+    RETURNING *`,
+    [job_id, job_code, item_name, item_code, rate, margin, quantity_used, amount]
+  );
+  return result.rows[0];
+};
+
+// Update job inventory usage record
+export const updateJobInventoryUsage = async (id, updates) => {
+  // Map frontend 'code' to DB 'item_code'
+  if (updates.code) {
+    updates.item_code = updates.code;
+    delete updates.code;
+  }
+  // Prevent multiple assignments to updated_at
+  if ('updated_at' in updates) {
+    delete updates.updated_at;
+  }
+  const fields = [];
+  const values = [];
+  let idx = 1;
+  for (const key in updates) {
+    fields.push(`${key} = $${idx}`);
+    values.push(updates[key]);
+    idx++;
+  }
+  values.push(id);
+  const result = await pool.query(
+    `UPDATE job_inventory_usage SET ${fields.join(', ')}, updated_at = CURRENT_TIMESTAMP WHERE id = $${idx} RETURNING *`,
+    values
+  );
+  return result.rows[0];
+};
+
+// Soft delete job inventory usage record
+export const deleteJobInventoryUsage = async (id, userId = null) => {
+  const result = await pool.query(
+    'UPDATE job_inventory_usage SET is_deleted = TRUE, deleted_by = $1, deleted_at = CURRENT_TIMESTAMP WHERE id = $2 RETURNING *',
+    [userId, id]
+  );
+  return result.rows[0];
+};
+
+export const getJobInventoryUsageByJobId = async (jobId) => {
+  const result = await pool.query(
+    'SELECT * FROM job_inventory_usage WHERE job_id = $1 AND is_deleted = FALSE ORDER BY created_at DESC',
+    [jobId]
+  );
+  return result.rows;
+}

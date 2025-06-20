@@ -8,6 +8,9 @@ import {
   deleteInvoiceLineItems,
   getInvoicesByCustomerId, 
 } from "../models/invoice.model.js"
+import html_to_pdf from "html-pdf-node"
+import nodemailer from "nodemailer"
+
 
 /**
  * Create a new invoice
@@ -241,3 +244,46 @@ export const deleteInvoiceController = async (req, res) => {
 }
 
 
+export const sendInvoiceEmailController = async (req, res) => {
+  const { to, subject, htmlContent } = req.body;
+  console.log(req.body)
+  if (!to || typeof to !== 'string' || !/^\S+@\S+\.\S+$/.test(to)) {
+    return res.status(400).json({ success: false, message: 'Recipient email (to) is missing or invalid.' });
+  }
+
+  // Create PDF buffer from HTML
+  const file = { content: htmlContent };
+  try {
+    const pdfBuffer = await html_to_pdf.generatePdf(file, { format: 'A4' });
+
+    // Send email with PDF attachment
+    const transporter = nodemailer.createTransport({
+      host: process.env.EMAIL_HOST,
+      port: process.env.EMAIL_PORT,
+      secure: process.env.EMAIL_SECURE === 'true',
+      auth: {
+        user: process.env.EMAIL_USER,
+        pass: process.env.EMAIL_PASS
+      }
+    });
+
+    await transporter.sendMail({
+      from: process.env.EMAIL_USER,
+      to,
+      subject,
+      text: 'Please find attached the invoice PDF.',
+      attachments: [
+        {
+          filename: 'invoice.pdf',
+          content: pdfBuffer
+        }
+      ]
+    });
+
+    res.json({ success: true });
+  } catch (err) {
+    console.error('Error sending email:', err);
+    res.status(500).json({ success: false, message: 'Failed to send email', error: err.message });
+  }
+};
+  

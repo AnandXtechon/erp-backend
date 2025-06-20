@@ -7,7 +7,11 @@ import {
   deleteJob,
   getJobsByCustomerId,
   updateNotesByJobId,
-  getUnpaidJobsByCustomerId
+  getUnpaidJobsByCustomerId,
+  createJobInventoryUsage,
+  updateJobInventoryUsage,
+  deleteJobInventoryUsage,
+  getJobInventoryUsageByJobId
 } from '../models/job.model.js';
 
 // Create a new job
@@ -131,3 +135,60 @@ export const deleteJobController = async (req, res) => {
     res.status(500).json({ success: false, message: error.message });
   }
 };
+
+// --- Job Inventory Usage Controllers ---
+
+// Create job inventory usage
+export const addJobInventoryUsageController = async (req, res) => {
+  try {
+    const usage = await createJobInventoryUsage(req.body);
+    res.status(201).json({ success: true, data: usage });
+  } catch (error) {
+    console.error('Error creating job inventory usage:', error);
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+// Update job inventory usage
+export const updateJobInventoryUsageController = async (req, res) => {
+  try {
+    const updated = await updateJobInventoryUsage(req.params.id, req.body);
+    if (!updated) {
+      return res.status(404).json({ success: false, message: 'Inventory usage record not found' });
+    }
+    res.status(200).json({ success: true, data: updated });
+  } catch (error) {
+    console.error('Error updating job inventory usage:', error);
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+// Soft delete job inventory usage
+export const deleteJobInventoryUsageController = async (req, res) => {
+  try {
+    const { userId } = req.body; // Optional: who deleted
+    const deleted = await deleteJobInventoryUsage(req.params.id, userId);
+    if (!deleted) {
+      return res.status(404).json({ success: false, message: 'Inventory usage record not found' });
+    }
+    res.status(200).json({ success: true, data: deleted });
+  } catch (error) {
+    console.error('Error deleting job inventory usage:', error);
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+
+export const getJobInventoryUsageController = async (req, res) => {
+  try {
+    const jobId = req.params.jobId;
+    const usage = await getJobInventoryUsageByJobId(jobId);
+    if (!usage || usage.length === 0) {
+      return res.status(404).json({ success: false, message: 'No inventory usage found for this job' });
+    }
+    res.status(200).json({ success: true, data: usage });
+  } catch (error) {
+    console.error('Error fetching job inventory usage:', error);
+    res.status(500).json({ success: false, message: error.message });
+  }
+}
