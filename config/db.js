@@ -10,7 +10,7 @@ const pool = new Pool({
   database: process.env.DB_NAME,
   port: Number(process.env.DB_PORT) || 5432,
   ssl: process.env.DB_SSL === 'true' ? { rejectUnauthorized: false } : false,
-  family: 4, // 👈 Forces IPv4 to avoid ENETUNREACH on IPv6
+  // family: 4, // 👈 Forces IPv4 to avoid ENETUNREACH on IPv6
 });
 
 pool.on('connect', () => {
